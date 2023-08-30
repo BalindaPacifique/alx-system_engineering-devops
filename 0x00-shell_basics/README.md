@@ -1,2 +1,2 @@
 #!/bin/bash
-'pwd' is command which print the working directory
+'pwd' this command prints the working directory

@@ -1,41 +1,42 @@
 #!/usr/bin/python3
+"""
+Exports to-do list information of all employees to JSON format.
+"""
+
 import json
 import requests
 
-def fetch_employee_data():
-    # Make an HTTP request to fetch the employee data from the API
-    response = requests.get('API_ENDPOINT_URL')
-    data = response.json()
-    return data
 
-def organize_data(data):
-    # Organize the data into the desired format
-    organized_data = {}
-    for item in data:
-        user_id = item['userId']
-        task = {
-            'username': item['username'],
-            'task': item['title'],
-            'completed': item['completed']
-        }
-        if user_id in organized_data:
-            organized_data[user_id].append(task)
-        else:
-            organized_data[user_id] = [task]
-    return organized_data
+def fetch_user_data():
+    """Fetch user information and to-do lists for all employees."""
+    # Base URL for the JSONPlaceholder API
+    url = "https://jsonplaceholder.typicode.com/"
 
-def export_to_json(organized_data):
-    # Export the organized data to a JSON file
-    with open('todo_all_employees.json', 'w') as json_file:
-        json.dump(organized_data, json_file)
+    # Fetch the list of all users (employees)
+    users = requests.get(url + "users").json()
+
+    # Create a dictionary containing to-do list information of all employees
+    data_to_export = {}
+    for user in users:
+        user_id = user["id"]
+        user_url = url + f"todos?userId={user_id}"
+        todo_list = requests.get(user_url).json()
+
+        data_to_export[user_id] = [
+            {
+                "task": todo.get("title"),
+                "completed": todo.get("completed"),
+                "username": user.get("username"),
+            }
+            for todo in todo_list
+        ]
+
+    return data_to_export
+
 
 if __name__ == "__main__":
-    # Fetch employee data from the API
-    employee_data = fetch_employee_data()
+    data_to_export = fetch_user_data()
 
-    # Organize the data
-    organized_data = organize_data(employee_data)
-
-    # Export data to JSON
-    export_to_json(organized_data)
-
+    # Write the data to a JSON file
+    with open("todo_all_employees.json", "w") as jsonfile:
+        json.dump(data_to_export, jsonfile, indent=4)

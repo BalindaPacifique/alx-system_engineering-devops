@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# Install Nginx if it's not already installed
+if ! command -v nginx &> /dev/null
+then
+    echo "Nginx is not installed. Installing Nginx..."
+    apt-get update
+    apt-get install -y nginx
+fi
+
+# Ensure Nginx configuration is set to listen on port 80
+NGINX_CONF="/etc/nginx/sites-available/default"
+if ! grep -q "listen 80;" $NGINX_CONF; then
+    echo "Configuring Nginx to listen on port 80..."
+    sed -i 's/listen [::]:80 default_server;/listen [::]:80 default_server;\n    listen 80;/' $NGINX_CONF
+    sed -i 's/listen 80 default_server;/listen 80;/' $NGINX_CONF
+fi
+
+# Start Nginx service if it's not running
+if ! systemctl is-active --quiet nginx; then
+    echo "Starting Nginx service..."
+    systemctl start nginx
+fi
+
+# Enable Nginx service to start on boot
+echo "Enabling Nginx service to start on boot..."
+systemctl enable nginx
+
+# Check if UFW (Uncomplicated Firewall) is installed and adjust settings
+if command -v ufw &> /dev/null; then
+    echo "Checking UFW settings..."
+    ufw allow 'Nginx Full'
+fi
+
+# Reload Nginx to apply any changes
+echo "Reloading Nginx to apply changes..."
+systemctl reload nginx
+
+echo "Nginx is configured and running on port 80."
